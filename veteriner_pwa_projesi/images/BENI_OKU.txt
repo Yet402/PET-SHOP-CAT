@@ -1,0 +1,1 @@
+Lütfen buraya 'icon-192.png' ve 'icon-512.png' adında iki adet kedi ikonu ekleyin.

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kedi Irkları - Pati Dostu Vet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Pati Dostu Vet</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="index.html">Ana Sayfa</a>
+                <a class="nav-link active" href="breeds.html">Kedi Irkları</a>
+                <a class="nav-link" href="about.html">Hakkımızda</a>
+                <a class="nav-link" href="contact.html">İletişim</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Kedi Irkları Ansiklopedisi</h2>
+        <input type="text" id="searchInput" class="form-control mb-3" placeholder="Irk ara... (Örn: Abyssinian)">
+        <div id="loading" class="alert alert-info">Veriler yükleniyor...</div>
+        <div class="row" id="breedsList"></div>
+    </div>
+
+    <script>
+        let allBreeds = []; 
+
+        async function getBreeds() {
+            const listDiv = document.getElementById('breedsList');
+            const loading = document.getElementById('loading');
+
+            try {
+                const response = await fetch('https://catfact.ninja/breeds?limit=25');
+                if(!response.ok) throw new Error("API Hatası");
+                const data = await response.json();
+                allBreeds = data.data; 
+                loading.style.display = 'none';
+                renderBreeds(allBreeds);
+            } catch (error) {
+                loading.className = 'alert alert-danger';
+                loading.innerText = 'Canlı API erişilemiyor, örnek veri gösteriliyor. (Plan B)';
+                fetchLocalBackup();
+            }
+        }
+
+        function renderBreeds(breeds) {
+            const listDiv = document.getElementById('breedsList');
+            listDiv.innerHTML = "";
+            if(breeds.length === 0) {
+                listDiv.innerHTML = "<p>Sonuç bulunamadı.</p>";
+                return;
+            }
+            breeds.forEach(breed => {
+                listDiv.innerHTML += `
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">${breed.breed}</h5>
+                                <p class="card-text">Ülke: ${breed.country}</p>
+                                <a href="detail.html?breed=${encodeURIComponent(breed.breed)}" class="btn btn-primary btn-sm">Detayları Gör</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase();
+            const filtered = allBreeds.filter(b => b.breed.toLowerCase().includes(keyword));
+            renderBreeds(filtered);
+        });
+
+        async function fetchLocalBackup() {
+            try {
+                const response = await fetch('data/backup.json');
+                const data = await response.json();
+                allBreeds = data.data;
+                renderBreeds(allBreeds);
+            } catch(e) { console.log("Yedek veri de okunamadı."); }
+        }
+
+        getBreeds();
+    </script>
+</body>
+</html>
